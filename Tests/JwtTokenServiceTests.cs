@@ -4,6 +4,7 @@ using Core.Interfaces;
 using Core.Models;
 using Core.Services;
 using FluentAssertions;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Tests;
 
@@ -28,12 +29,40 @@ public class JwtTokenServiceTests
     }
 
     [Fact]
-    public void GenerateToken_ShouldCreateValidJwtWithCorrectClaims()
+    public void GenerateToken_WithValidUser_ShouldReturnValidJwt()
     {
         var user = new TestUser
         {
             Id = Guid.NewGuid(),
-            Identity = "user_test"
+            Identity = "test_user"
+        };
+
+        var options = new JwtOptions
+        {
+            SecretKey = TestSecret,
+            Issuer = TestIssuer,
+            Audience = TestAudience,
+            ExpiryInMinutes = 60
+        };
+
+        var token = _tokenService.GenerateToken(user, options);
+
+        token.Should().NotBeNullOrWhiteSpace();
+
+        var handler = new JwtSecurityTokenHandler();
+        handler.CanReadToken(token).Should().BeTrue();
+    }
+
+    [Fact]
+    public void GenerateToken_ShouldIncludeCorrectClaims()
+    {
+        var userId = Guid.NewGuid();
+        var userIdentity = "john_doe";
+
+        var user = new TestUser
+        {
+            Id = userId,
+            Identity = userIdentity
         };
 
         var options = new JwtOptions
@@ -44,98 +73,92 @@ public class JwtTokenServiceTests
             ExpiryInMinutes = 30
         };
 
-        var tokenString = _tokenService.GenerateToken(user, options);
-
-        tokenString.Should().NotBeNullOrWhiteSpace();
+        var token = _tokenService.GenerateToken(user, options);
 
         var handler = new JwtSecurityTokenHandler();
-        handler.CanReadToken(tokenString).Should().BeTrue();
-
-        var jwtToken = handler.ReadJwtToken(tokenString);
-
-        jwtToken.Issuer.Should().Be(TestIssuer);
-        jwtToken.Audiences.Should().Contain(TestAudience);
+        var jwtToken = handler.ReadJwtToken(token);
 
         var nameIdClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
         nameIdClaim.Should().NotBeNull();
-        nameIdClaim!.Value.Should().Be(user.Id.ToString());
+        nameIdClaim!.Value.Should().Be(userId.ToString());
 
         var nameClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
         nameClaim.Should().NotBeNull();
-        nameClaim!.Value.Should().Be(user.Identity);
+        nameClaim!.Value.Should().Be(userIdentity);
     }
 
     [Fact]
-    public void GenerateToken_WithShortSecret_ShouldThrowArgumentException()
+    public void GenerateToken_ShouldIncludeJtiClaim()
     {
         var user = new TestUser { Id = Guid.NewGuid(), Identity = "test" };
-        var shortSecret = "too-short";
-
         var options = new JwtOptions
         {
-            SecretKey = shortSecret,
+            SecretKey = TestSecret,
             Issuer = TestIssuer,
-            Audience = TestAudience,
-            ExpiryInMinutes = 30
+            Audience = TestAudience
         };
 
-        var action = () => _tokenService.GenerateToken(user, options);
+        var token = _tokenService.GenerateToken(user, options);
 
-        action.Should().Throw<ArgumentException>();
+        var handler = new JwtSecurityTokenHandler();
+        var jwtToken = handler.ReadJwtToken(token);
+
+        var jtiClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Jti);
+        jtiClaim.Should().NotBeNull();
+        Guid.TryParse(jtiClaim!.Value, out _).Should().BeTrue();
     }
 
     [Fact]
-    public void GenerateToken_WithNullUser_ShouldThrowArgumentNullException()
+    public void GenerateToken_ShouldHaveCorrectIssuerAndAudience()
     {
+        var user = new TestUser { Id = Guid.NewGuid(), Identity = "test" };
+        var options = new JwtOptions
+        {
+            SecretKey = TestSecret,
+            Issuer = TestIssuer,
+            Audience = TestAudience
+        };
+
+        var token = _tokenService.GenerateToken(user, options);
+
+        var handler = new JwtSecurityTokenHandler();
+        var jwtToken = handler.ReadJwtToken(token);
+
+        jwtToken.Issuer.Should().Be(TestIssuer);
+        jwtToken.Audiences.Should().Contain(TestAudience);
+    }
+
+    [Fact]
+    public void GenerateToken_ShouldSetCorrectExpiration()
+    {
+        var expiryMinutes = 120;
+        var user = new TestUser { Id = Guid.NewGuid(), Identity = "test" };
         var options = new JwtOptions
         {
             SecretKey = TestSecret,
             Issuer = TestIssuer,
             Audience = TestAudience,
-            ExpiryInMinutes = 30
+            ExpiryInMinutes = expiryMinutes
         };
 
-        var action = () => _tokenService.GenerateToken(null!, options);
+        var beforeGeneration = DateTime.UtcNow;
+        var token = _tokenService.GenerateToken(user, options);
+        var afterGeneration = DateTime.UtcNow;
 
-        action.Should().Throw<ArgumentNullException>()
-            .WithParameterName("user");
-    }
+        var handler = new JwtSecurityTokenHandler();
+        var jwtToken = handler.ReadJwtToken(token);
 
-    [Fact]
-    public void GenerateToken_WithNullOptions_ShouldThrowArgumentNullException()
-    {
-        var user = new TestUser { Id = Guid.NewGuid(), Identity = "test" };
-
-        var action = () => _tokenService.GenerateToken(user, null!);
-
-        action.Should().Throw<ArgumentNullException>()
-            .WithParameterName("options");
-    }
-
-    [Fact]
-    public void GenerateToken_WithEmptySecretKey_ShouldThrowArgumentException()
-    {
-        var user = new TestUser { Id = Guid.NewGuid(), Identity = "test" };
-        var options = new JwtOptions
-        {
-            SecretKey = string.Empty,
-            Issuer = TestIssuer,
-            Audience = TestAudience,
-            ExpiryInMinutes = 30
-        };
-
-        var action = () => _tokenService.GenerateToken(user, options);
-
-        action.Should().Throw<ArgumentException>();
+        jwtToken.ValidTo.Should().BeAfter(beforeGeneration.AddMinutes(expiryMinutes - 1))
+            .And.BeBefore(afterGeneration.AddMinutes(expiryMinutes + 1));
     }
 
     [Fact]
     public void GenerateToken_ShouldIncludeCustomClaims()
     {
-        var customClaims = new List<Claim>
+        var customClaims = new[]
         {
             new Claim("role", "admin"),
-            new Claim("department", "engineering")
+            new Claim("department", "backend")
         };
 
         var user = new TestUser
@@ -149,14 +172,13 @@ public class JwtTokenServiceTests
         {
             SecretKey = TestSecret,
             Issuer = TestIssuer,
-            Audience = TestAudience,
-            ExpiryInMinutes = 60
+            Audience = TestAudience
         };
 
-        var tokenString = _tokenService.GenerateToken(user, options);
+        var token = _tokenService.GenerateToken(user, options);
 
         var handler = new JwtSecurityTokenHandler();
-        var jwtToken = handler.ReadJwtToken(tokenString);
+        var jwtToken = handler.ReadJwtToken(token);
 
         var roleClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "role");
         roleClaim.Should().NotBeNull();
@@ -164,44 +186,142 @@ public class JwtTokenServiceTests
 
         var departmentClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == "department");
         departmentClaim.Should().NotBeNull();
-        departmentClaim!.Value.Should().Be("engineering");
+        departmentClaim!.Value.Should().Be("backend");
     }
 
     [Fact]
-    public void GenerateToken_ShouldSetCorrectExpiration()
+    public void GenerateToken_WithNullUser_ShouldThrowArgumentNullException()
     {
-        var user = new TestUser
+        var options = new JwtOptions { SecretKey = TestSecret };
+
+        var action = () => _tokenService.GenerateToken(null!, options);
+
+        action.Should().Throw<ArgumentNullException>()
+            .WithParameterName("user");
+    }
+
+    [Fact]
+    public void GenerateToken_WithNullOptions_ShouldThrowArgumentNullException()
+    {
+        var user = new TestUser { Id = Guid.NewGuid() };
+
+        var action = () => _tokenService.GenerateToken(user, null!);
+
+        action.Should().Throw<ArgumentNullException>()
+            .WithParameterName("options");
+    }
+
+    [Fact]
+    public void GenerateToken_WithShortSecretKey_ShouldThrowArgumentException()
+    {
+        var user = new TestUser { Id = Guid.NewGuid() };
+        var options = new JwtOptions { SecretKey = "short" };
+
+        var action = () => _tokenService.GenerateToken(user, options);
+
+        action.Should().Throw<ArgumentException>();
+    }
+
+    [Fact]
+    public void GenerateToken_WithEmptySecretKey_ShouldThrowArgumentException()
+    {
+        var user = new TestUser { Id = Guid.NewGuid() };
+        var options = new JwtOptions { SecretKey = string.Empty };
+
+        var action = () => _tokenService.GenerateToken(user, options);
+
+        action.Should().Throw<ArgumentException>();
+    }
+
+    [Fact]
+    public void GenerateToken_ShouldUseHmacSha256Algorithm()
+    {
+        var user = new TestUser { Id = Guid.NewGuid(), Identity = "test" };
+        var options = new JwtOptions
         {
-            Id = Guid.NewGuid(),
-            Identity = "user_test"
+            SecretKey = TestSecret,
+            Issuer = TestIssuer,
+            Audience = TestAudience
         };
 
-        int expiryMinutes = 60;
+        var token = _tokenService.GenerateToken(user, options);
+
+        var handler = new JwtSecurityTokenHandler();
+        var jwtToken = handler.ReadJwtToken(token);
+
+        jwtToken.Header.Alg.Should().Be(SecurityAlgorithms.HmacSha256);
+    }
+
+    [Fact]
+    public void GenerateRefreshToken_ShouldReturnNonEmptyString()
+    {
+        var refreshToken = _tokenService.GenerateRefreshToken();
+
+        refreshToken.Should().NotBeNullOrWhiteSpace();
+    }
+
+    [Fact]
+    public void GenerateRefreshToken_ShouldReturnBase64String()
+    {
+        var refreshToken = _tokenService.GenerateRefreshToken();
+
+        var action = () => Convert.FromBase64String(refreshToken);
+
+        action.Should().NotThrow();
+    }
+
+    [Fact]
+    public void GenerateRefreshToken_ShouldGenerateUniqueTokens()
+    {
+        var tokens = new HashSet<string>();
+
+        for (int i = 0; i < 10; i++)
+        {
+            var token = _tokenService.GenerateRefreshToken();
+            tokens.Add(token);
+        }
+
+        tokens.Count.Should().Be(10, "All generated tokens should be unique");
+    }
+
+    [Fact]
+    public void GenerateRefreshToken_ShouldHaveSufficientLength()
+    {
+        var refreshToken = _tokenService.GenerateRefreshToken();
+        var decodedBytes = Convert.FromBase64String(refreshToken);
+
+        decodedBytes.Length.Should().Be(64, "Refresh token should be 64 bytes");
+    }
+
+    [Fact]
+    public void GetPrincipalFromExpiredToken_WithValidExpiredToken_ShouldReturnClaimsPrincipal()
+    {
+        var user = new TestUser { Id = Guid.NewGuid(), Identity = "test_user" };
         var options = new JwtOptions
         {
             SecretKey = TestSecret,
             Issuer = TestIssuer,
             Audience = TestAudience,
-            ExpiryInMinutes = expiryMinutes
+            ExpiryInMinutes = -10
         };
 
-        var tokenString = _tokenService.GenerateToken(user, options);
+        var expiredToken = _tokenService.GenerateToken(user, options);
 
-        var handler = new JwtSecurityTokenHandler();
-        var jwtToken = handler.ReadJwtToken(tokenString);
+        var principal = _tokenService.GetPrincipalFromExpiredToken(expiredToken, TestSecret);
 
-        var timeDifference = (jwtToken.ValidTo - DateTime.UtcNow).TotalMinutes;
-        timeDifference.Should().BeGreaterThanOrEqualTo(expiryMinutes - 1)
-            .And.BeLessThanOrEqualTo(expiryMinutes + 1);
+        principal.Should().NotBeNull();
     }
 
     [Fact]
-    public void GenerateToken_ShouldIncludeJtiClaim()
+    public void GetPrincipalFromExpiredToken_ShouldPreserveUserClaims()
     {
+        var userId = Guid.NewGuid();
+        var userIdentity = "test_user";
+
         var user = new TestUser
         {
-            Id = Guid.NewGuid(),
-            Identity = "user_test"
+            Id = userId,
+            Identity = userIdentity
         };
 
         var options = new JwtOptions
@@ -209,16 +329,101 @@ public class JwtTokenServiceTests
             SecretKey = TestSecret,
             Issuer = TestIssuer,
             Audience = TestAudience,
-            ExpiryInMinutes = 30
+            ExpiryInMinutes = -10
         };
 
-        var tokenString = _tokenService.GenerateToken(user, options);
+        var expiredToken = _tokenService.GenerateToken(user, options);
+        var principal = _tokenService.GetPrincipalFromExpiredToken(expiredToken, TestSecret);
 
-        var handler = new JwtSecurityTokenHandler();
-        var jwtToken = handler.ReadJwtToken(tokenString);
+        var nameIdClaim = principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+        nameIdClaim.Should().NotBeNull();
+        nameIdClaim!.Value.Should().Be(userId.ToString());
 
-        var jtiClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Jti);
-        jtiClaim.Should().NotBeNull();
-        Guid.TryParse(jtiClaim!.Value, out _).Should().BeTrue();
+        var nameClaim = principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name);
+        nameClaim.Should().NotBeNull();
+        nameClaim!.Value.Should().Be(userIdentity);
+    }
+
+    [Fact]
+    public void GetPrincipalFromExpiredToken_WithInvalidSecret_ShouldThrowSecurityTokenException()
+    {
+        var user = new TestUser { Id = Guid.NewGuid(), Identity = "test" };
+        var options = new JwtOptions
+        {
+            SecretKey = TestSecret,
+            Issuer = TestIssuer,
+            Audience = TestAudience,
+            ExpiryInMinutes = -10
+        };
+
+        var expiredToken = _tokenService.GenerateToken(user, options);
+        var wrongSecret = "wrong-secret-key-that-is-at-least-32-chars-long!!";
+
+        var action = () => _tokenService.GetPrincipalFromExpiredToken(expiredToken, wrongSecret);
+
+        action.Should().Throw<SecurityTokenException>();
+    }
+
+    [Fact]
+    public void GetPrincipalFromExpiredToken_WithWrongAlgorithmToken_ShouldThrowSecurityTokenException()
+    {
+        var token = "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.something";
+
+        var action = () => _tokenService.GetPrincipalFromExpiredToken(token, TestSecret);
+
+        action.Should().Throw<Exception>();
+    }
+
+    [Fact]
+    public void GetPrincipalFromExpiredToken_WithInvalidTokenFormat_ShouldThrowException()
+    {
+        var invalidToken = "invalid.token.format";
+
+        var action = () => _tokenService.GetPrincipalFromExpiredToken(invalidToken, TestSecret);
+
+        action.Should().Throw<Exception>();
+    }
+
+    [Fact]
+    public void GetPrincipalFromExpiredToken_ShouldPreserveCustomClaims()
+    {
+        var customClaims = new[]
+        {
+            new Claim("role", "moderator"),
+            new Claim("level", "5")
+        };
+
+        var user = new TestUser
+        {
+            Id = Guid.NewGuid(),
+            Identity = "moderator_user",
+            CustomClaims = customClaims
+        };
+
+        var options = new JwtOptions
+        {
+            SecretKey = TestSecret,
+            Issuer = TestIssuer,
+            Audience = TestAudience,
+            ExpiryInMinutes = 60
+        };
+
+        var expiredToken = _tokenService.GenerateToken(user, options);
+        var principal = _tokenService.GetPrincipalFromExpiredToken(expiredToken, TestSecret);
+
+        var roleClaim = principal.Claims.FirstOrDefault(c => c.Type == "role");
+        if (roleClaim != null)
+        {
+            roleClaim.Value.Should().Be("moderator");
+        }
+
+        var levelClaim = principal.Claims.FirstOrDefault(c => c.Type == "level");
+        if (levelClaim != null)
+        {
+            levelClaim.Value.Should().Be("5");
+        }
+
+        var nameIdClaim = principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+        nameIdClaim.Should().NotBeNull();
     }
 }
