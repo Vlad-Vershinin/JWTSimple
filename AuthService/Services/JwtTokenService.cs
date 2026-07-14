@@ -1,12 +1,12 @@
-using Core.Interfaces;
-using Core.Models;
+using AuthService.Interfaces;
+using AuthService.Models;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Core.Services;
+namespace AuthService.Services;
 
 public class JwtTokenService<TId> : IJwtTokenService<TId> where TId : IEquatable<TId>
 {

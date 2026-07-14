@@ -1,6 +1,6 @@
-using Core.Extensions;
-using Core.Interfaces;
-using Core.Models;
+using AuthService.Extensions;
+using AuthService.Interfaces;
+using AuthService.Models;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -30,11 +30,11 @@ public class DependencyInjectionTests
 
         var passwordHasher = serviceProvider.GetService<IPasswordHasher>();
         passwordHasher.Should().NotBeNull();
-        passwordHasher.Should().BeOfType<Core.Services.PasswordHasher>();
+        passwordHasher.Should().BeOfType<AuthService.Services.PasswordHasher>();
 
         var jwtTokenService = serviceProvider.GetService<IJwtTokenService<Guid>>();
         jwtTokenService.Should().NotBeNull();
-        jwtTokenService.Should().BeOfType<Core.Services.JwtTokenService<Guid>>();
+        jwtTokenService.Should().BeOfType<AuthService.Services.JwtTokenService<Guid>>();
 
         var registeredOptions = serviceProvider.GetService<JwtOptions>();
         registeredOptions.Should().NotBeNull();

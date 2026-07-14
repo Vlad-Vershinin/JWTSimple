@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+	<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	<PackageId>AuthService.Core</PackageId>
+	<Version>1.0.1</Version>
+	<Authors>Vladislav</Authors>
+	<Company>VladislavDev</Company>
+	<Description>Легковесная и расширяемая библиотека для авторизации и аутентификации (JWT + Refresh Tokens + BCrypt).</Description>
+	<PackageTags>auth;jwt;security;bcrypt;aspnetcore</PackageTags>
+	<RepositoryUrl>https://github.com/Vlad-Vershinin/AuthService</RepositoryUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.28" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.19.1" />
+  </ItemGroup>
+
+</Project>

@@ -1,7 +1,7 @@
-using Core.Models;
+using AuthService.Models;
 using System.Security.Claims;
 
-namespace Core.Interfaces;
+namespace AuthService.Interfaces;
 
 public interface IJwtTokenService<TId> where TId : IEquatable<TId>
 {

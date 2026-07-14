@@ -1,4 +1,4 @@
-namespace Core.Interfaces;
+namespace AuthService.Interfaces;
 
 public interface IPasswordHasher
 {

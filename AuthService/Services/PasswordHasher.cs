@@ -1,4 +1,4 @@
-namespace Core.Services;
+namespace AuthService.Services;
 
 public class PasswordHasher : Interfaces.IPasswordHasher
 {

@@ -1,4 +1,4 @@
-using Core.Models;
+using AuthService.Models;
 using FluentAssertions;
 
 namespace Tests;
