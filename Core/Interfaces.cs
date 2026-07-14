@@ -9,5 +9,5 @@ public interface IPasswordHasher
 
 public interface IJwtTokenService<TId> where TId : IEquatable<TId>
 {
-    string GenerateToken(IAuthUser<TId> user, string secretKey, string issuer, string audience, int expiryInMinutes);
+    string GenerateToken(IAuthUser<TId> user, JwtOptions options);
 }

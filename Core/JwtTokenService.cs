@@ -7,13 +7,16 @@ namespace Core;
 
 public class JwtTokenService<TId> : IJwtTokenService<TId> where TId : IEquatable<TId>
 {
-    public string GenerateToken(IAuthUser<TId> user, string secretKey, string issuer, string audience, int expiryInMinutes)
+    public string GenerateToken(IAuthUser<TId> user, JwtOptions options)
     {
         if (user == null)
             throw new ArgumentNullException(nameof(user));
 
-        if (string.IsNullOrWhiteSpace(secretKey) || secretKey.Length < 32)
-            throw new ArgumentException("Secret key must be at least 32 characters long.", nameof(secretKey));
+        if (options == null)
+            throw new ArgumentNullException(nameof(options));
+
+        if (string.IsNullOrWhiteSpace(options.SecretKey) || options.SecretKey.Length < 32)
+            throw new ArgumentException("Secret key must be at least 32 characters long.", nameof(options.SecretKey));
 
         var claims = new List<Claim>
         {
@@ -22,14 +25,14 @@ public class JwtTokenService<TId> : IJwtTokenService<TId> where TId : IEquatable
             new Claim(ClaimTypes.Name, user.Identity)
         };
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(options.SecretKey));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(
-            issuer: issuer,
-            audience: audience,
+            issuer: options.Issuer,
+            audience: options.Audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(expiryInMinutes),
+            expires: DateTime.UtcNow.AddMinutes(options.ExpiryInMinutes),
             signingCredentials: creds
         );
 

@@ -33,7 +33,15 @@ public class JwtTokenServiceTests
             Identity = "user_test"
         };
 
-        var tokenString = _tokenService.GenerateToken(user, TestSecret, TestIssuer, TestAudience, expiryInMinutes: 30);
+        var options = new JwtOptions
+        {
+            SecretKey = TestSecret,
+            Issuer = TestIssuer,
+            Audience = TestAudience,
+            ExpiryInMinutes = 30
+        };
+
+        var tokenString = _tokenService.GenerateToken(user, options);
 
         tokenString.Should().NotBeNullOrWhiteSpace();
 
@@ -60,7 +68,15 @@ public class JwtTokenServiceTests
         var user = new TestUser { Id = Guid.NewGuid(), Identity = "test" };
         var shortSecret = "too-short";
 
-        var action = () => _tokenService.GenerateToken(user, shortSecret, TestIssuer, TestAudience, 30);
+        var options = new JwtOptions
+        {
+            SecretKey = shortSecret,
+            Issuer = TestIssuer,
+            Audience = TestAudience,
+            ExpiryInMinutes = 30
+        };
+
+        var action = () => _tokenService.GenerateToken(user, options);
 
         action.Should().Throw<ArgumentException>();
     }
