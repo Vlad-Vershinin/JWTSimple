@@ -25,6 +25,11 @@ public class JwtTokenService<TId> : IJwtTokenService<TId> where TId : IEquatable
             new Claim(ClaimTypes.Name, user.Identity)
         };
 
+        if (user.CustomClaims != null)
+        {
+            claims.AddRange(user.CustomClaims);
+        }
+
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(options.SecretKey));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
