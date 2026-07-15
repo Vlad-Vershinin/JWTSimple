@@ -1,0 +1,32 @@
+name: Publish to NuGet
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Pack library
+        run: dotnet pack AuthService.csproj -c Release -o ./dist
+
+      - name: NuGet login (OIDC)
+        uses: NuGet/login@v1
+        with:
+          user: Lutzow
+
+      - name: Push to NuGet.org
+        run: dotnet nuget push ./dist/*.nupkg --source https://api.nuget.org/v3/index.json
