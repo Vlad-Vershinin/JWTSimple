@@ -7,12 +7,15 @@
 
 	<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 	<PackageId>JWTSimple</PackageId>
-	<Version>1.0.0</Version>
+	<Version>1.0.1</Version>
 	<Authors>Vladislav</Authors>
 	<Company>VladislavDev</Company>
 	<Description>Lightweight and extensible library for authorization and authentication (JWT + Refresh Tokens + BCrypt).</Description>
 	<PackageTags>auth;jwt;security;bcrypt;aspnetcore</PackageTags>
-	<RepositoryUrl>https://github.com/Vlad-Vershinin/AuthService</RepositoryUrl>
+	<RepositoryUrl>https://github.com/Vlad-Vershinin/JWTSimple</RepositoryUrl>
+	<PackageReadmeFile>README.md</PackageReadmeFile>
+	<RepositoryUrl>https://github.com/Vlad-Vershinin/JWTSimple</RepositoryUrl>
+	<RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,4 +24,7 @@
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.19.1" />
   </ItemGroup>
 
+	<ItemGroup>
+		<None Include="..\README.md" Pack="true" PackagePath="\" />
+	</ItemGroup>
 </Project>
