@@ -15,7 +15,7 @@ JWTSimple is a lightweight authentication and authorization library for .NET 8+ 
 ## 🚀 Installation
 
 ```bash
-dotnet add package JWTSimple --version 1.0.0
+dotnet add package JWTSimple --version 1.0.1
 ```
 
 ---
