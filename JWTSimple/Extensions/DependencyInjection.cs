@@ -2,11 +2,11 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
-using AuthService.Interfaces;
-using AuthService.Models;
-using AuthService.Services;
+using JWTSimple.Interfaces;
+using JWTSimple.Models;
+using JWTSimple.Services;
 
-namespace AuthService.Extensions;
+namespace JWTSimple.Extensions;
 
 public static class DependencyInjection
 {

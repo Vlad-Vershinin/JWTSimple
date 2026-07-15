@@ -1,4 +1,4 @@
 <Solution>
-  <Project Path="AuthService/AuthService.csproj" />
+  <Project Path="JWTSimple/JWTSimple.csproj" />
   <Project Path="Tests/Tests.csproj" />
 </Solution>

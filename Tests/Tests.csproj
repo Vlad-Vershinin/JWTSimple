@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AuthService\AuthService.csproj" />
+    <ProjectReference Include="..\JWTSimple\JWTSimple.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,6 +1,6 @@
-using AuthService.Extensions;
-using AuthService.Interfaces;
-using AuthService.Models;
+using JWTSimple.Extensions;
+using JWTSimple.Interfaces;
+using JWTSimple.Models;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -9,7 +9,7 @@ namespace Tests;
 public class DependencyInjectionTests
 {
     private const string TestSecret = "super-secret-key-that-is-at-least-32-characters-long!";
-    private const string TestIssuer = "MyAuthService";
+    private const string TestIssuer = "MyJWTSimple";
     private const string TestAudience = "MyApps";
 
     [Fact]
@@ -30,11 +30,11 @@ public class DependencyInjectionTests
 
         var passwordHasher = serviceProvider.GetService<IPasswordHasher>();
         passwordHasher.Should().NotBeNull();
-        passwordHasher.Should().BeOfType<AuthService.Services.PasswordHasher>();
+        passwordHasher.Should().BeOfType<JWTSimple.Services.PasswordHasher>();
 
         var jwtTokenService = serviceProvider.GetService<IJwtTokenService<Guid>>();
         jwtTokenService.Should().NotBeNull();
-        jwtTokenService.Should().BeOfType<AuthService.Services.JwtTokenService<Guid>>();
+        jwtTokenService.Should().BeOfType<JWTSimple.Services.JwtTokenService<Guid>>();
 
         var registeredOptions = serviceProvider.GetService<JwtOptions>();
         registeredOptions.Should().NotBeNull();

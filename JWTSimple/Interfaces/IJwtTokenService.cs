@@ -1,7 +1,7 @@
-using AuthService.Models;
+using JWTSimple.Models;
 using System.Security.Claims;
 
-namespace AuthService.Interfaces;
+namespace JWTSimple.Interfaces;
 
 public interface IJwtTokenService<TId> where TId : IEquatable<TId>
 {

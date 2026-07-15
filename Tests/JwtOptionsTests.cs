@@ -1,4 +1,4 @@
-using AuthService.Models;
+using JWTSimple.Models;
 using FluentAssertions;
 
 namespace Tests;

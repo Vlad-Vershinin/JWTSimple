@@ -1,4 +1,4 @@
-namespace AuthService.Interfaces;
+namespace JWTSimple.Interfaces;
 
 public interface IPasswordHasher
 {

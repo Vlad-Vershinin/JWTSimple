@@ -1,6 +1,6 @@
 using System.Security.Claims;
 
-namespace AuthService.Models;
+namespace JWTSimple.Models;
 
 public interface IAuthUser<TId> where TId : IEquatable<TId>
 {

@@ -1,8 +1,8 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using AuthService.Interfaces;
-using AuthService.Models;
-using AuthService.Services;
+using JWTSimple.Interfaces;
+using JWTSimple.Models;
+using JWTSimple.Services;
 using FluentAssertions;
 using Microsoft.IdentityModel.Tokens;
 
@@ -12,7 +12,7 @@ public class JwtTokenServiceTests
 {
     private readonly IJwtTokenService<Guid> _tokenService;
     private const string TestSecret = "super-secret-key-that-is-at-least-32-characters-long!";
-    private const string TestIssuer = "MyAuthService";
+    private const string TestIssuer = "MyJWTSimple";
     private const string TestAudience = "MyApps";
 
     public JwtTokenServiceTests()

@@ -1,4 +1,4 @@
-namespace AuthService.Services;
+namespace JWTSimple.Services;
 
 public class PasswordHasher : Interfaces.IPasswordHasher
 {

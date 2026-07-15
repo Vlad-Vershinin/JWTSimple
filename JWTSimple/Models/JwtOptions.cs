@@ -1,4 +1,4 @@
-namespace AuthService.Models;
+namespace JWTSimple.Models;
 
 public class JwtOptions
 {

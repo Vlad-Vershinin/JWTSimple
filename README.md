@@ -1,6 +1,6 @@
-# AuthService 🔑
+# JWTSimple 🔑
 
-AuthService is a lightweight authentication and authorization library for .NET 8+ applications.
+JWTSimple is a lightweight authentication and authorization library for .NET 8+ applications.
 
 ## Features
 
@@ -25,8 +25,8 @@ dotnet add package AuthService --version 1.0.2
 ### 1. Configure JWT
 
 ```csharp
-using AuthService.Extensions;
-using AuthService.Models;
+using JWTSimple.Extensions;
+using JWTSimple.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,7 +40,7 @@ var jwtOptions = new JwtOptions
     ExpiryInMinutes = 15 // Short-lived access token
 };
 
-// 2. Register AuthService dependencies (specify your user ID type)
+// 2. Register JWTSimple dependencies (specify your user ID type)
 builder.Services.AddCustomAuth<Guid>(jwtOptions);
 
 builder.Services.AddControllers();
@@ -59,8 +59,8 @@ app.Run();
 
 ```csharp
 using System.Security.Claims;
-using AuthService.Interfaces;
-using AuthService.Models;
+using JWTSimple.Interfaces;
+using JWTSimple.Models;
 
 public class AppUser : IAuthUser<Guid>, IEmailAuthenticatable
 {
@@ -92,8 +92,8 @@ public class AppUser : IAuthUser<Guid>, IEmailAuthenticatable
 ```csharp
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
-using AuthService.Interfaces;
-using AuthService.Models;
+using JWTSimple.Interfaces;
+using JWTSimple.Models;
 
 [ApiController]
 [Route("api/auth")]
